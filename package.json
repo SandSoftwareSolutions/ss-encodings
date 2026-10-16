@@ -1,0 +1,44 @@
+{
+  "name": "@sandsoftwaresolutions/encodings",
+  "version": "0.1.0",
+  "description": "Base32, base58, base64url and hex with strict decoding, instead of Buffer's silent leniency.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "base32",
+    "base58",
+    "base64url",
+    "hex",
+    "encoding"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SandSoftwareSolutions/ss-encodings.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SandSoftwareSolutions/ss-encodings/issues"
+  },
+  "homepage": "https://github.com/SandSoftwareSolutions/ss-encodings#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}
