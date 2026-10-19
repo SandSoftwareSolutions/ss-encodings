@@ -47,7 +47,9 @@ function makeBaseN(alphabet, bitsPerChar, { pad = "", ignoreCase = false, name }
         }
         buffer &= (1 << bits) - 1;
       }
-      if (buffer !== 0 && bits < bitsPerChar) throw new SyntaxError(`${name}: the last character has stray bits; the text is not canonical`);
+      // What is left over is a partial byte: fewer bits than one character and all zero. More than that is a character too many.
+      if (bits >= bitsPerChar) throw new SyntaxError(`${name}: the text has a length that no byte string encodes to`);
+      if (buffer !== 0) throw new SyntaxError(`${name}: the last character has stray bits; the text is not canonical`);
       return Uint8Array.from(out);
     }
   };
@@ -75,22 +77,26 @@ export const hex = {
   }
 };
 
-/** URL-safe base64 without padding. Decoding is strict: Node's decoder accepts garbage, this one does not. */
+/** URL-safe base64 without padding. Decoding is strict: invalid characters, impossible lengths and non-zero spare bits in the last character all throw (Node's decoder accepts them). Padding `=` is accepted and ignored. */
 export const base64url = {
   encode: (input) => Buffer.from(bytesOf(input)).toString("base64url"),
   decode(text) {
     if (typeof text !== "string") throw new TypeError("base64url: expected a string");
     const clean = text.replace(/=+$/, "");
     if (!/^[A-Za-z0-9_-]*$/.test(clean) || clean.length % 4 === 1) throw new SyntaxError("base64url: not a valid base64url string");
-    return new Uint8Array(Buffer.from(clean, "base64url"));
+    const decoded = Buffer.from(clean, "base64url");
+    if (decoded.toString("base64url") !== clean) throw new SyntaxError("base64url: the last character has stray bits; the text is not canonical");
+    return new Uint8Array(decoded);
   }
 };
 
+const BASE58_MAX_BYTES = 8192; // the algorithm is quadratic: 20 000 bytes already take about two seconds, and it blocks the event loop
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 /** Base58 (Bitcoin alphabet): no 0, O, I, l. Leading zero bytes are kept as leading 1s. */
 export const base58 = {
   encode(input) {
     const bytes = bytesOf(input);
+    if (bytes.length > BASE58_MAX_BYTES) throw new RangeError(`base58: input is limited to ${BASE58_MAX_BYTES} bytes`);
     let zeros = 0;
     while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
     const digits = [];
@@ -110,6 +116,7 @@ export const base58 = {
   },
   decode(text) {
     if (typeof text !== "string") throw new TypeError("base58: expected a string");
+    if (text.length > Math.ceil(BASE58_MAX_BYTES * 1.4)) throw new RangeError(`base58: text is limited to ${Math.ceil(BASE58_MAX_BYTES * 1.4)} characters`);
     let zeros = 0;
     while (zeros < text.length && text[zeros] === "1") zeros++;
     const bytes = [];
@@ -131,5 +138,5 @@ export const base58 = {
   }
 };
 
-/** Turns decoded bytes into text (UTF-8). */
-export const toText = (bytes) => new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+/** Turns decoded bytes into text (UTF-8). Throws on invalid UTF-8; a leading byte order mark is kept. */
+export const toText = (bytes) => new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);

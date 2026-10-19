@@ -40,5 +40,8 @@ Every codec has `encode(input)` (a string is encoded as UTF-8; `Uint8Array` and 
 
 ## Strictness
 
-- Invalid characters, an odd-length hex string, an impossible base64url length, or a base32 text whose last character carries stray bits throw a `SyntaxError`.
+- Invalid characters, an odd-length hex string, an impossible base64url or base32 length, or a base32 or base64url text whose last character carries stray bits (so two different texts cannot decode to the same bytes) throw a `SyntaxError`.
+- `base58` is quadratic and runs on the main thread, so it refuses more than 8192 bytes (about 11 500 characters) with a `RangeError`.
+- `toText` keeps a leading byte order mark (`TextDecoder` would drop it) and throws on invalid UTF-8.
+- Padding `=` is accepted and ignored when decoding base32 and base64url, whatever its count.
 - Whitespace and dashes are allowed in base32 on purpose: people type secrets in groups.

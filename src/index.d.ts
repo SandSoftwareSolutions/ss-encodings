@@ -14,5 +14,6 @@ export const base32: {
 export const base32Crockford: Codec;
 export const hex: Codec;
 export const base64url: Codec;
+/** Throws a RangeError for more than 8192 bytes (the algorithm is quadratic). */
 export const base58: Codec;
 export function toText(bytes: Uint8Array): string;
