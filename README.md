@@ -10,6 +10,8 @@ Base32, base58, base64url and hex with **strict** decoding. Node's own `Buffer.f
 npm install @sandsoftwaresolutions/encodings
 ```
 
+Works with `import` and `require()`, and ships TypeScript types for both.
+
 ## Usage
 
 ```js
